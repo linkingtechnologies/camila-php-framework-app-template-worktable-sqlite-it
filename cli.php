@@ -26,6 +26,10 @@ class CamilaAppCli extends CLI
 		$options->registerCommand('install-plugin', 'Install plugin');
         $options->registerArgument('name', 'Plugin name', true, 'install-plugin');
 		$options->registerArgument('lang', 'Plugin language', true, 'install-plugin');
+		
+		$options->registerCommand('set-config-var', 'Set config var');
+        $options->registerArgument('name', 'Config var name', true, 'set-config-var');
+		$options->registerArgument('value', 'Config var value', true, 'set-config-var');
     }
 
     protected function main(Options $options)
@@ -36,6 +40,9 @@ class CamilaAppCli extends CLI
                 break;
 			case 'install-plugin':
 				$this->installPlugin($options);
+                break;
+			case 'set-config-var':
+				$this->setConfigVar($options);
                 break;
             default:
                 $this->error('No known command was called, we show the default help instead:');
@@ -73,6 +80,37 @@ class CamilaAppCli extends CLI
 			} else {
 				$this->error('Error extracting template zip file');
 			}
+		}
+	}
+	
+	protected function setConfigVar(Options $options) {
+		$name = $options->getArgs()[0];
+		$value = $options->getArgs()[1];
+		
+		$reading = fopen('var/1270014001.inc.php', 'r');
+		$writing = fopen('var/1270014001.inc.php.tmp', 'w');
+		$replaced = false;
+
+		while (!feof($reading)) {
+			$line = fgets($reading);
+			if (stristr($line, $name) && stristr($line, 'define')) {
+				$line = "define('".$name."', '".$value."');\r\n";
+				$replaced = true;
+				$this->success('Var ' . $name . ' set to ' . $value);
+			}
+			fputs($writing, $line);
+		}
+		fclose($reading);
+		fclose($writing);
+		// might as well not overwrite the file if we didn't replace anything
+		if ($replaced) 
+		{
+			rename('var/1270014001.inc.php', 'var/1270014001.inc.php.old');
+			rename('var/1270014001.inc.php.tmp', 'var/1270014001.inc.php');
+			unlink('var/1270014001.inc.php.old');
+		} else {
+			$this->error('Var ' . $name . ' not found!');
+			unlink('var/1270014001.inc.php.tmp');
 		}
 	}
 }
