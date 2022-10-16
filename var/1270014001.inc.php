@@ -51,7 +51,7 @@ define('CAMILA_AUTH_PASSWORD_HASHING', true);
 
 define('CAMILA_APPLICATION_NAME', 'Worktable - Name');
 define('CAMILA_APPLICATION_TITLE', 'Worktable - Title');
-define('CAMILA_APPLICATION_GROUP', 'Worttable');
+define('CAMILA_APPLICATION_GROUP', 'Worktable');
 
 /////8
 define('CAMILA_LOGIN_MLANG', false);
