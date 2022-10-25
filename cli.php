@@ -74,6 +74,10 @@ class CamilaAppCli extends CLI
 				$zip->close();
 				rename('plugins/camila-php-framework-app-plugin-'.$name.'-main', 'plugins/'.$name);
 				unlink('plugins/'.$zipFile);
+				$myfile = fopen('plugins/'.$name . '/conf/repo.json', 'w') or die("Unable to open file for repo info!");
+				$txt = $this->getRepositoryInfo($name);
+				fwrite($myfile, $txt);
+				fclose($myfile);
 				global $_CAMILA;
 				CamilaPlugins::install($_CAMILA['db'], $lang, $name);
 				$this->success('Plugin ' . $options->getArgs()[0] . ' installed!');
@@ -82,7 +86,7 @@ class CamilaAppCli extends CLI
 			}
 		}
 	}
-	
+
 	protected function setConfigVar(Options $options) {
 		$name = $options->getArgs()[0];
 		$value = $options->getArgs()[1];
@@ -112,6 +116,17 @@ class CamilaAppCli extends CLI
 			$this->error('Var ' . $name . ' not found!');
 			unlink('var/1270014001.inc.php.tmp');
 		}
+	}
+	
+	protected function getRepositoryInfo($name) {
+		$url = "https://api.github.com/repos/linkingtechnologies/camila-php-framework-app-plugin-".$name;
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_URL,$url);
+		curl_setopt($ch, CURLOPT_USERAGENT, "PHP");
+		$result=curl_exec($ch);
+		curl_close($ch);
+		return $result;
 	}
 }
 
