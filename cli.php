@@ -30,6 +30,9 @@ class CamilaAppCli extends CLI
 		$options->registerCommand('set-config-var', 'Set config var');
         $options->registerArgument('name', 'Config var name', true, 'set-config-var');
 		$options->registerArgument('value', 'Config var value', true, 'set-config-var');
+		
+		$options->registerCommand('show-plugin-info', 'Show plugin info');
+        $options->registerArgument('name', 'Plugin name', true, 'show-plugin-info');
     }
 
     protected function main(Options $options)
@@ -43,6 +46,9 @@ class CamilaAppCli extends CLI
                 break;
 			case 'set-config-var':
 				$this->setConfigVar($options);
+                break;
+			case 'show-plugin-info':
+				$this->showPluginInfo($options);
                 break;
             default:
                 $this->error('No known command was called, we show the default help instead:');
@@ -86,6 +92,11 @@ class CamilaAppCli extends CLI
 			}
 		}
 	}
+	
+	protected function showPluginInfo(Options $options) {
+		$name = $options->getArgs()[0];
+		$this->info($this->getRepositoryInfo($name));
+	}	
 
 	protected function setConfigVar(Options $options) {
 		$name = $options->getArgs()[0];
@@ -117,13 +128,16 @@ class CamilaAppCli extends CLI
 			unlink('var/1270014001.inc.php.tmp');
 		}
 	}
-	
+
 	protected function getRepositoryInfo($name) {
 		$url = "https://api.github.com/repos/linkingtechnologies/camila-php-framework-app-plugin-".$name;
-		$ch = curl_init();
+		$ch = curl_init();				
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_URL,$url);
+		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_USERAGENT, "PHP");
+		//curl_setopt($ch, CURLOPT_VERBOSE, 1);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 		$result=curl_exec($ch);
 		curl_close($ch);
 		return $result;
