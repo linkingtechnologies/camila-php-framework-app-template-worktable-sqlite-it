@@ -3,8 +3,6 @@
 
 require '../../vendor/autoload.php';
 
-use splitbrain\phpcli\CLI;
-use splitbrain\phpcli\Options;
 
 require_once('../../camila/autoloader.inc.php');
 
@@ -14,6 +12,17 @@ require('../../camila/i18n.inc.php');
 require('../../camila/camila_hawhaw.php');
 require('../../camila/database.inc.php');
 require('../../camila/plugins.class.inc.php');
+
+require CAMILA_DIR. 'cli/Exception.php';
+require CAMILA_DIR. 'cli/TableFormatter.php';
+require CAMILA_DIR. 'cli/Options.php';
+require CAMILA_DIR. 'cli/Base.php';
+require CAMILA_DIR. 'cli/Colors.php';
+require CAMILA_DIR. 'cli/CLI.php';
+
+use splitbrain\phpcli\CLI;
+use splitbrain\phpcli\Options;
+use splitbrain\phpcli\Exception;
 
 class CamilaAppCli extends CLI
 {
@@ -33,6 +42,11 @@ class CamilaAppCli extends CLI
 		
 		$options->registerCommand('show-plugin-info', 'Show plugin info');
         $options->registerArgument('name', 'Plugin name', true, 'show-plugin-info');
+		
+		$options->registerCommand('exe-remote-cmd', 'Execute remote command');
+		$options->registerArgument('url', 'Remote URL', true, 'exe-remote-cmd');
+		$options->registerArgument('cmd', 'Command', true, 'exe-remote-cmd');
+
     }
 
     protected function main(Options $options)
@@ -50,6 +64,9 @@ class CamilaAppCli extends CLI
 			case 'show-plugin-info':
 				$this->showPluginInfo($options);
                 break;
+			case 'exe-remote-cmd':
+				$this->executeRemoteCommand($options);
+                break;
             default:
                 $this->error('No known command was called, we show the default help instead:');
                 echo $options->help();
@@ -59,10 +76,14 @@ class CamilaAppCli extends CLI
 	
 	protected function initApp(Options $options) {
 		$lang = $options->getArgs()[0];
+
 		$camilaApp = new CamilaApp();
+
 		$db = NewADOConnection(CAMILA_DB_DSN);
+
 		$camilaApp->db = $db;
 		$camilaApp->lang = $lang;
+
 		$camilaApp->resetTables(CAMILA_TABLES_DIR);	
 	}
 	
