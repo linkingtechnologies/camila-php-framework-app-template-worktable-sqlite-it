@@ -29,6 +29,8 @@ class CamilaAppCli extends CLI
 
     protected function setup(Options $options)
     {
+		$this->registerDefaultCommands($options);
+
 		$options->registerCommand('init-app', 'Create new App');
         $options->registerArgument('lang', 'App language', true, 'init-app');
 		
@@ -42,10 +44,6 @@ class CamilaAppCli extends CLI
 		
 		$options->registerCommand('show-plugin-info', 'Show plugin info');
         $options->registerArgument('name', 'Plugin name', true, 'show-plugin-info');
-		
-		$options->registerCommand('exe-remote-cmd', 'Execute remote command');
-		$options->registerArgument('url', 'Remote URL', true, 'exe-remote-cmd');
-		$options->registerArgument('cmd', 'Command', true, 'exe-remote-cmd');
 
     }
 
