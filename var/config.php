@@ -72,7 +72,7 @@ define('CAMILA_DB_', 'camila_');
 define('CAMILA_SESSION_DURATION', 90*24*60*60);
 define('CAMILA_CHALLENGE_LOGIN', false);
 define('CAMILA_USERNAME_LOGIN', true);
-define('CAMILA_PASSWORD_LENGTH', 14);
+define('CAMILA_PASSWORD_LENGTH', 30);
 define('CAMILA_ENCRYPT_PASSWORD', false);
 define('CAMILA_USER_CAN_CHANGE_PWD', true);
 
