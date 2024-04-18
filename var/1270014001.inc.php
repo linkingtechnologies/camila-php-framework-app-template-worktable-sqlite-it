@@ -48,6 +48,7 @@ define('CAMILA_AUTH_PASSWORD_HASHING', true);
 //define('CAMILA_DB_DSN', "mysql://user:pass@host/dbname");
 //define('CAMILA_AUTH_DSN', "mysql://user:pass@host/dbname");
 
+define('CAMILA_APIKEYAUTH_KEYS' , 'TEMP_CHANGE_ME_XNQv0mSsPC344QWOaMzs4BGtFrsbHeRb');
 
 define('CAMILA_APPLICATION_NAME', 'Worktable - Name');
 define('CAMILA_APPLICATION_TITLE', 'Worktable - Title');
