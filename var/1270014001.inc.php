@@ -1,6 +1,6 @@
 <?php
 /*  This File is part of Camila PHP Framework
-    Copyright (C) 2006-2024 Umberto Bresciani
+    Copyright (C) 2006-2025 Umberto Bresciani
 
     Camila PHP Framework is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -80,10 +80,6 @@ define('CAMILA_MAIL_IS_SMTP', true);
 define('CAMILA_MAIL_SMTP_AUTH', false);
 
 define('CAMILA_ANON_LOGIN', false);
-define('CAMILA_ANON_USER', 'anon');
-define('CAMILA_ANON_PASS', 'anon');
-define('CAMILA_ADMIN_USER', 'admin');
-define('CAMILA_ADMIN_PASS', 'admin');
 
 define('CAMILA_LOGIN_URL', 'cf_login.php');
 define('CAMILA_LOGOUT_URL', 'cf_logout.php');
