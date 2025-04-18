@@ -55,6 +55,8 @@ define('CAMILA_APPLICATION_NAME', 'Worktable - Name');
 define('CAMILA_APPLICATION_TITLE', 'Worktable - Title');
 define('CAMILA_APPLICATION_GROUP', 'Worktable');
 
+define('CAMILA_APPLICATION_UI_KIT', 'bootstrap3');
+
 /////8
 define('CAMILA_LOGIN_MLANG', false);
 
