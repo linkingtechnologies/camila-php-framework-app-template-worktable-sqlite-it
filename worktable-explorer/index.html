@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Worktable Database Explorer</title>
   <script src="./js/vue.global.js"></script>
+  <link rel="icon" href="../images/favicon.ico" />
   <link href="../../../lib/bulma/css/bulma.min.css" rel="stylesheet">
   <link href="../../../lib/remixicon/fonts/remixicon.css" rel="stylesheet">
 </head>
@@ -257,7 +258,8 @@
           tables: [],
           selectedTable: '',
           records: [],
-          newRecord: {}
+          newRecord: {},
+          total: 0
         };
       },
       methods: {
@@ -279,6 +281,7 @@
           };
           localStorage.setItem('config', JSON.stringify(config));
           this.success = this.strings.configSaved;
+          setTimeout(() => this.success = '', 3000);
         },
         clearConfig() {
           localStorage.removeItem('config');
@@ -292,6 +295,7 @@
           this.lang = 'en';
           this.strings = translations['en'];
           this.success = this.strings.configCleared;
+          setTimeout(() => this.success = '', 3000);
           this.tables = [];
           this.selectedTable = '';
           this.records = [];
@@ -310,10 +314,16 @@
                 ...(this.mode === 'proxy' ? { 'X-API-Target': this.url } : {})
               }
             });
+            if (!res.ok) {
+              const errText = await res.text();
+              throw new Error(errText || `HTTP ${res.status}`);
+            }
             const data = await res.json();
             this.tables = data.tables || [];
           } catch (e) {
-            this.error = this.strings.tableLoadError;
+            console.error(e);
+            this.error = `${this.strings.tableLoadError}`;
+            setTimeout(() => this.error = '', 4000);
           } finally {
             this.loading = false;
           }
@@ -323,18 +333,27 @@
           try {
             const res = await fetch(this.buildUrl(`records/${this.selectedTable}`, `page=1,${this.pageSize}`), {
               headers: {
-              [this.header]: this.token,
-              ...(this.mode === 'proxy' ? { 'X-API-Target': this.url } : {})
-            }
+                [this.header]: this.token,
+                ...(this.mode === 'proxy' ? { 'X-API-Target': this.url } : {})
+              }
             });
+
+            if (!res.ok) {
+              const errText = await res.text();
+              throw new Error(errText || `HTTP ${res.status}`);
+            }
+
             const data = await res.json();
             this.records = data.records || [];
+            this.total = data.results || this.records.length;
             this.newRecord = {};
             if (this.records.length) {
               Object.keys(this.records[0]).forEach(k => this.newRecord[k] = '');
             }
           } catch (e) {
-            this.error = this.strings.tableLoadError;
+            console.error(e);
+            this.error = `${this.strings.tableLoadError} (${e.message || 'unknown error'})`;
+            setTimeout(() => this.error = '', 4000);
           } finally {
             this.loading = false;
           }
@@ -346,14 +365,17 @@
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                [this.header]: this.token
+                [this.header]: this.token,
+                ...(this.mode === 'proxy' ? { 'X-API-Target': this.url } : {})
               },
               body: JSON.stringify(this.newRecord)
             });
             await this.loadTableData();
             this.success = this.strings.recordCreated;
-          } catch {
-            this.error = 'Create failed.';
+            setTimeout(() => this.success = '', 3000);
+          } catch (e) {
+            this.error = `${this.strings.createError} (${e.message || 'unknown error'})`;
+            setTimeout(() => this.error = '', 4000);
           } finally {
             this.loading = false;
           }
@@ -366,13 +388,16 @@
               method: 'PUT',
               headers: {
                 'Content-Type': 'application/json',
-                [this.header]: this.token
+                [this.header]: this.token,
+                ...(this.mode === 'proxy' ? { 'X-API-Target': this.url } : {})
               },
               body: JSON.stringify(record)
             });
             this.success = this.strings.recordUpdated;
-          } catch {
-            this.error = 'Update failed.';
+            setTimeout(() => this.success = '', 3000);
+          } catch (e) {
+            this.error = `${this.strings.updateError} (${e.message || 'unknown error'})`;
+            setTimeout(() => this.error = '', 4000);
           } finally {
             this.loading = false;
           }
@@ -381,14 +406,23 @@
           this.loading = true;
           try {
             const id = record.id;
-            await fetch(this.buildUrl(`records/${this.selectedTable}/${id}`), {
+            const res = await fetch(this.buildUrl(`records/${this.selectedTable}/${id}`), {
               method: 'DELETE',
-              headers: { [this.header]: this.token }
+              headers: {
+                [this.header]: this.token,
+                ...(this.mode === 'proxy' ? { 'X-API-Target': this.url } : {})
+              }
             });
+            if (!res.ok) {
+              const errText = await res.text();
+              throw new Error(errText || `HTTP ${res.status}`);
+            }
             await this.loadTableData();
             this.success = this.strings.recordDeleted;
-          } catch {
-            this.error = 'Delete failed.';
+            setTimeout(() => this.success = '', 3000);
+          } catch (e) {
+            this.error = `${this.strings.deleteError} (${e.message || 'unknown error'})`;
+            setTimeout(() => this.error = '', 4000);
           } finally {
             this.loading = false;
           }
