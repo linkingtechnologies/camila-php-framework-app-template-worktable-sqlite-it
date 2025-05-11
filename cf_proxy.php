@@ -1,57 +1,57 @@
-
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Headers: X-API-Key, Content-Type");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header('Content-Type: application/json');
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
+$targetBase = $_SERVER['HTTP_X_API_TARGET'] ?? null;
+if (!$targetBase) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Missing required headers']);
     exit;
 }
 
-$configPath = __DIR__ . '/data/config.json';
-if (!file_exists($configPath)) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Missing config.json']);
+if (!isset($_GET['path'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Missing required parameters']);
     exit;
 }
-
-$config = json_decode(file_get_contents($configPath), true);
-$apiUrl = rtrim($config['url'] ?? '', '/');
-$token = $config['token'] ?? '';
-$lang = $config['lang'] ?? 'en';
-
-if (!$apiUrl || !$token) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Invalid configuration']);
-    exit;
-}
-
-$targetPath = $_GET['path'] ?? '';
-$query = $_SERVER['QUERY_STRING'] ?? '';
-$query = preg_replace('/(^|&)path=[^&]*/', '', $query);
-$targetUrl = $apiUrl . '/' . ltrim($targetPath, '/') . ($query ? "?$query" : '');
 
 $method = $_SERVER['REQUEST_METHOD'];
-$headers = [
-    "X-API-Key: $token",
-    "X-App-Lang: $lang",
-    "Accept: application/json"
-];
+$path = ltrim($_GET['path'], '/');
+$query = $_SERVER['QUERY_STRING'] ?? '';
+$query = preg_replace('/^path=[^&]+&?/', '', $query);
+
+$targetUrl = rtrim($targetBase, '/') . '/' . $path;
+if (!empty($query)) {
+    $targetUrl .= '?' . $query;
+}
+
+$headers = [];
+foreach (getallheaders() as $key => $value) {
+    if (strtolower($key) !== 'host' && strtolower($key) !== 'x-api-target') {
+        $headers[] = "$key: $value";
+    }
+}
+
 $body = file_get_contents('php://input');
 
 $ch = curl_init($targetUrl);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
 if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
     curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
 }
-$response = curl_exec($ch);
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-curl_close($ch);
 
-http_response_code($httpCode);
-header("Content-Type: $contentType");
-echo $response;
+$response = curl_exec($ch);
+$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+if ($response === false) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Curl error: ' . curl_error($ch)]);
+} else {
+    http_response_code($httpcode);
+    echo $response;
+}
+
+curl_close($ch);
+?>

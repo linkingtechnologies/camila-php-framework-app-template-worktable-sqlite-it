@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Worktable Database Explorer</title>
+  <script src="./js/vue.global.js"></script>
+  <link href="../../../lib/bulma/css/bulma.min.css" rel="stylesheet">
+  <link href="../../../lib/remixicon/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <nav class="navbar is-dark" role="navigation">
+      <div class="navbar-brand">
+        <a class="navbar-item">{{ strings.dashboardTitle }}</a>
+      </div>
+      <div class="navbar-menu">
+        <div class="navbar-start">
+          <a class="navbar-item" :class="{ 'is-active': view === 'config' }" @click="view = 'config'">
+            {{ strings.configLabel }}
+          </a>
+          <a class="navbar-item" :class="{ 'is-active': view === 'tabelle' }" @click="view = 'tabelle'">
+            {{ strings.tablesLabel }}
+          </a>
+        </div>
+        <div class="navbar-end">
+          <div class="navbar-item">
+            <div class="select is-small">
+              <select v-model="lang" @change="switchLang">
+                <option value="en">English</option>
+                <option value="it">Italiano</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <section class="section">
+      <div class="container">
+        <div v-if="loading" class="has-text-centered mb-4">
+          <div class="mb-2">{{ strings.loadingMessage }}</div>
+          <button class="button is-loading is-white is-large" disabled></button>
+        </div>
+
+        <div v-if="success" class="notification is-success is-light">
+          <button class="delete" @click="success = ''"></button>
+          {{ success }}
+        </div>
+        <div v-if="error" class="notification is-danger is-light">
+          <button class="delete" @click="error = ''"></button>
+          {{ error }}
+        </div>
+
+        <div v-if="view === 'config'">
+          <h1 class="title">{{ strings.configTitle }}</h1>
+          <div class="box">
+            <div class="field">
+              <label class="label">{{ strings.modeLabel }}</label>
+              <div class="control">
+                <div class="select">
+                  <select v-model="mode">
+                    <option value="proxy">Proxy PHP</option>
+                    <option value="direct">Direct Call</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">{{ strings.apiUrlLabel }}</label>
+              <div class="control">
+                <input class="input" type="text" v-model="url" placeholder="https://api.example.com">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">{{ strings.headerLabel }}</label>
+              <div class="control">
+                <input class="input" type="text" v-model="header" placeholder="X-API-Key">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">{{ strings.tokenLabel }}</label>
+              <div class="control">
+                <input class="input" type="text" v-model="token">
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">{{ strings.pageSizeLabel }}</label>
+              <div class="control">
+                <div class="select">
+                  <select v-model.number="pageSize">
+                    <option :value="10">10</option>
+                    <option :value="20">20</option>
+                    <option :value="50">50</option>
+                    <option :value="100">100</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="control mt-3">
+              <button class="button is-primary mr-2" @click="saveConfig">{{ strings.saveButton }}</button>
+              <button class="button is-warning" @click="clearConfig">{{ strings.clearButton }}</button>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="view === 'tabelle'">
+          <h1 class="title">{{ strings.tablesTitle }}</h1>
+          <div class="field is-grouped">
+            <div class="control">
+              <button class="button is-light" @click="toggleEditMode">
+                {{ editMode ? strings.disableEditMode : strings.enableEditMode }}
+              </button>
+            </div>
+            <div class="control">
+              <button class="button is-link" @click="loadTables">{{ strings.loadTablesButton }}</button>
+            </div>
+            <div class="control">
+              <div class="select">
+                <select v-model="selectedTable" @change="loadTableData">
+                  <option disabled value="">{{ strings.selectTablePlaceholder }}</option>
+                  <option v-for="table in tables" :key="table">{{ table }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="records.length">
+            <!-- Table will be shown below -->
+            <div class="table-container">
+              <table class="table is-fullwidth is-striped">
+                <thead>
+                  <tr>
+                    <th v-for="(val, key) in records[0]" :key="key">{{ key }}</th>
+                    <th>{{ strings.actions }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="record in records" :key="record.id">
+                    <td v-for="(val, key) in record" :key="key">
+  <template v-if="editMode">
+    <template v-if="key === 'id'">
+      <input class="input is-small" :value="val" readonly />
+    </template>
+    <template v-else>
+      <input class="input is-small" v-model="record[key]" />
+    </template>
+  </template>
+  <template v-else>
+    {{ val }}
+  </template>
+</td>
+                    <td>
+                      <button class="button is-small is-success" @click="updateRecord(record)"><i class="ri-save-2-line"></i></button>
+                      <button class="button is-small is-danger" @click="deleteRecord(record)"><i class="ri-delete-bin-line"></i></button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td v-for="(val, key) in newRecord" :key="key">
+  <template v-if="key === 'id'">
+    <input class="input is-small" :value="val" readonly />
+  </template>
+  <template v-else>
+    <input class="input is-small" v-model="newRecord[key]" />
+  </template>
+</td>
+                    <td>
+                      <button class="button is-small is-primary" @click="createRecord()"><i class="ri-add-line"></i></button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+                  <div v-else-if="selectedTable && !loading" class="notification is-info is-light">
+            {{ strings.noRecordsFound }}
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    const translations = {
+      en: {
+        dashboardTitle: "📡 Worktable Database Explorer",
+        configLabel: "Configuration",
+        tablesLabel: "Tables",
+        configTitle: "Configure API",
+        modeLabel: "Mode",
+        apiUrlLabel: "API URL",
+        headerLabel: "Header",
+        tokenLabel: "Token",
+        pageSizeLabel: "Records per page",
+        saveButton: "Save Configuration",
+        clearButton: "Clear Configuration",
+        loadTablesButton: "Load Tables",
+        selectTablePlaceholder: "Select a table",
+        tablesTitle: "Browse Tables",
+        enableEditMode: "Enable Edit Mode",
+        disableEditMode: "Disable Edit Mode",
+        recordCreated: "Record created!",
+        recordUpdated: "Record updated!",
+        recordDeleted: "Record deleted!",
+        loadingMessage: "Loading...",
+        configSaved: "Configuration saved!",
+        configCleared: "Configuration cleared!",
+        tableLoadError: "Error loading table records.",
+        noRecordsFound: "No records found for this table"
+      },
+      it: {
+        dashboardTitle: "📡 Esplora Database Worktable",
+        configLabel: "Configurazione",
+        tablesLabel: "Tabelle",
+        configTitle: "Configura API",
+        modeLabel: "Modalità",
+        apiUrlLabel: "URL API",
+        headerLabel: "Header",
+        tokenLabel: "Token",
+        pageSizeLabel: "Record per pagina",
+        saveButton: "Salva Configurazione",
+        clearButton: "Svuota Configurazione",
+        loadTablesButton: "Carica Tabelle",
+        selectTablePlaceholder: "Seleziona una tabella",
+        tablesTitle: "Sfoglia Tabelle",
+        enableEditMode: "Abilita Modifica",
+        disableEditMode: "Disabilita Modifica",
+        recordCreated: "Record creato!",
+        recordUpdated: "Record aggiornato!",
+        recordDeleted: "Record eliminato!",
+        loadingMessage: "Caricamento...",
+        configSaved: "Configurazione salvata!",
+        configCleared: "Configurazione svuotata!",
+        tableLoadError: "Errore nel caricamento dei dati della tabella.",
+        noRecordsFound: "Nessun record trovato per questa tabella"
+      }
+    };
+    
+    createApp({
+      data() {
+        const cfg = JSON.parse(localStorage.getItem('config') || '{}');
+        const edit = localStorage.getItem('editMode');
+        return {
+          editMode: edit === null ? true : edit === 'true',
+          loading: false,
+          success: '',
+          error: '',
+          view: 'config',
+          mode: cfg.mode || 'proxy',
+          url: cfg.url || '',
+          header: cfg.header || 'X-API-Key',
+          token: cfg.token || '',
+          pageSize: cfg.pageSize || 20,
+          lang: cfg.lang || 'en',
+          strings: translations[cfg.lang || 'en'],
+          tables: [],
+          selectedTable: '',
+          records: [],
+          newRecord: {}
+        };
+      },
+      methods: {
+        toggleEditMode() {
+          this.editMode = !this.editMode;
+          localStorage.setItem('editMode', this.editMode);
+        },
+        switchLang() {
+          this.strings = translations[this.lang];
+        },
+        saveConfig() {
+          const config = {
+            mode: this.mode,
+            url: this.url,
+            header: this.header,
+            token: this.token,
+            pageSize: this.pageSize,
+            lang: this.lang
+          };
+          localStorage.setItem('config', JSON.stringify(config));
+          this.success = this.strings.configSaved;
+        },
+        clearConfig() {
+          localStorage.removeItem('config');
+          localStorage.removeItem('editMode');
+          this.editMode = false;
+          this.mode = 'proxy';
+          this.url = '';
+          this.header = 'X-API-Key';
+          this.token = '';
+          this.pageSize = 20;
+          this.lang = 'en';
+          this.strings = translations['en'];
+          this.success = this.strings.configCleared;
+          this.tables = [];
+          this.selectedTable = '';
+          this.records = [];
+        },
+        buildUrl(path, query = '') {
+          if (this.mode === 'proxy') return `../cf_proxy.php?path=${path}${query ? '&' + query : ''}`;
+          const sep = path ? '/' : '';
+          return `${this.url}${sep}${path}${query ? '?' + query : ''}`;
+        },
+        async loadTables() {
+          this.loading = true;
+          try {
+            const res = await fetch(this.buildUrl('tables'), {
+              headers: {
+                [this.header]: this.token,
+                ...(this.mode === 'proxy' ? { 'X-API-Target': this.url } : {})
+              }
+            });
+            const data = await res.json();
+            this.tables = data.tables || [];
+          } catch (e) {
+            this.error = this.strings.tableLoadError;
+          } finally {
+            this.loading = false;
+          }
+        },
+        async loadTableData() {
+          this.loading = true;
+          try {
+            const res = await fetch(this.buildUrl(`records/${this.selectedTable}`, `page=1,${this.pageSize}`), {
+              headers: {
+              [this.header]: this.token,
+              ...(this.mode === 'proxy' ? { 'X-API-Target': this.url } : {})
+            }
+            });
+            const data = await res.json();
+            this.records = data.records || [];
+            this.newRecord = {};
+            if (this.records.length) {
+              Object.keys(this.records[0]).forEach(k => this.newRecord[k] = '');
+            }
+          } catch (e) {
+            this.error = this.strings.tableLoadError;
+          } finally {
+            this.loading = false;
+          }
+        },
+        async createRecord() {
+          this.loading = true;
+          try {
+            const res = await fetch(this.buildUrl(`records/${this.selectedTable}`), {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                [this.header]: this.token
+              },
+              body: JSON.stringify(this.newRecord)
+            });
+            await this.loadTableData();
+            this.success = this.strings.recordCreated;
+          } catch {
+            this.error = 'Create failed.';
+          } finally {
+            this.loading = false;
+          }
+        },
+        async updateRecord(record) {
+          this.loading = true;
+          try {
+            const id = record.id;
+            const res = await fetch(this.buildUrl(`records/${this.selectedTable}/${id}`), {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                [this.header]: this.token
+              },
+              body: JSON.stringify(record)
+            });
+            this.success = this.strings.recordUpdated;
+          } catch {
+            this.error = 'Update failed.';
+          } finally {
+            this.loading = false;
+          }
+        },
+        async deleteRecord(record) {
+          this.loading = true;
+          try {
+            const id = record.id;
+            await fetch(this.buildUrl(`records/${this.selectedTable}/${id}`), {
+              method: 'DELETE',
+              headers: { [this.header]: this.token }
+            });
+            await this.loadTableData();
+            this.success = this.strings.recordDeleted;
+          } catch {
+            this.error = 'Delete failed.';
+          } finally {
+            this.loading = false;
+          }
+        }
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
