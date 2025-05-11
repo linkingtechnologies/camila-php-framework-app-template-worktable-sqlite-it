@@ -273,7 +273,41 @@
         goButton: "Go",
         invalidPage: "Invalid page number",
         actions: "Actions"
-      }
+      },
+	it: {
+    dashboardTitle: "📡 Esploratore Database Worktable",
+    configLabel: "Configurazione",
+    tablesLabel: "Tabelle",
+    configTitle: "Configura API",
+    modeLabel: "Modalità",
+    apiUrlLabel: "URL API",
+    headerLabel: "Header",
+    tokenLabel: "Token",
+    pageSizeLabel: "Record per pagina",
+    saveButton: "Salva Configurazione",
+    clearButton: "Cancella Configurazione",
+    loadTablesButton: "Carica Tabelle",
+    selectTablePlaceholder: "Seleziona una tabella",
+    tablesTitle: "Consulta Tabelle",
+    enableEditMode: "Abilita Modifica",
+    disableEditMode: "Disabilita Modifica",
+    recordCreated: "Record creato!",
+    recordUpdated: "Record aggiornato!",
+    recordDeleted: "Record eliminato!",
+    loadingMessage: "Caricamento...",
+    configSaved: "Configurazione salvata!",
+    configCleared: "Configurazione cancellata!",
+    tableLoadError: "Errore nel caricamento dei record.",
+    noRecordsFound: "Nessun record trovato per questa tabella",
+    prevPage: "Precedente",
+    nextPage: "Successiva",
+    firstPage: "Prima pagina",
+    lastPage: "Ultima pagina",
+    gotoPagePlaceholder: "Vai alla pagina...",
+    goButton: "Vai",
+    invalidPage: "Numero di pagina non valido",
+    actions: "Azioni"
+  }
     };
 
     createApp({
@@ -331,8 +365,8 @@
           localStorage.setItem('editMode', this.editMode);
         },
         switchLang() {
-          this.strings = translations[this.config.lang];
-        },
+          this.strings = translations[this.config.lang] || translations['en'];
+		},
         saveConfig() {
           localStorage.setItem('config', JSON.stringify(this.config));
           this.strings = translations[this.config.lang];
