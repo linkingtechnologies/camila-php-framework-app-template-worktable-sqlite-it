@@ -20,11 +20,7 @@ if (!defined('CAMILA_LOGIN_MLANG')) {
 
 define('CAMILA_APPLICATION_PREFIX', CAMILA_APP_DIR . '_');
 
-define('CAMILA_WORKTABLE_SPECIAL_ICON_ENABLED', true);
-define('CAMILA_WORKTABLE_SELECTED_ICON_ENABLED', true);
-define('CAMILA_WORKTABLE_IMPORT_ENABLED', true);
-define('CAMILA_WORKTABLE_HIDE_POWERED_BY_WHEN_LOGGED_IN', true);
-
+define('CAMILA_AUTH_PASSWORD_HASHING', true);
 
 define('CAMILA_WORKTABLE_CONFIRM_VIA_MAIL_ENABLED', false);
 define('CAMILA_WORKTABLE_CONFIRM_VIA_MAIL_FROM_NAME', '');
@@ -55,16 +51,35 @@ define('CAMILA_DEFAULT_USER_LEVEL', 20);
 define('CAMILA_LINKSET_SEPARATOR', '>');
 define('CAMILA_DEFAULT_JS_SKIN', 2);
 
-define('CAMILA_DIR', '../../camila/');
-define('CAMILA_CSS_DIR', '../../camila/css/');
-define('CAMILA_IMG_DIR', '../../camila/images/');
-define('CAMILA_LIB_DIR', '../../lib/');
-define('CAMILA_VENDOR_DIR', '../../vendor/');
+if (is_dir('../../camila/')) {
+	define('CAMILA_DIR', '../../camila/');
+	define('CAMILA_CSS_DIR', '../../camila/css/');
+	define('CAMILA_IMG_DIR', '../../camila/images/');
+	define('CAMILA_LIB_DIR', '../../lib/');
+	define('CAMILA_VENDOR_DIR', '../../vendor/');
+}
+
+
+if (is_dir('lib/')) {
+	define('CAMILA_DIR', '');
+	define('CAMILA_CSS_DIR', '../../camila/css/');
+	define('CAMILA_IMG_DIR', '../../camila/images/');
+	define('CAMILA_LIB_DIR', './lib/');
+	define('CAMILA_VENDOR_DIR', './vendor/');
+}
+
+if (is_dir('../../../../camila/')) {
+	define('CAMILA_DIR', '../../../../camila/');
+	define('CAMILA_CSS_DIR', '../../../../camila/css/');
+	define('CAMILA_IMG_DIR', '../../../../camila/images/');
+	define('CAMILA_LIB_DIR', '../../../../lib/');
+	define('CAMILA_VENDOR_DIR', '../../../../vendor/');
+}
+
 define('CAMILA_TABLES_DIR', dirname(dirname(dirname(dirname(__FILE__)))).'/camila/tables/');
 define('CAMILA_LANG_DIR', 'lang/');
 define('CAMILA_FORM_DIR', 'form/');
 define('CAMILA_PROV_DIR', 'provider/');
-
 
 define('CAMILA_LANG', 'it');
 
